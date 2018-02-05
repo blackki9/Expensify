@@ -6,6 +6,10 @@ exports[`should render expense item with data 1`] = `
     replace={false}
     to="/edit/undefined"
   />
-   
+  <p>
+    $0.00
+    -
+    January 1st 1970
+  </p>
 </div>
 `;
