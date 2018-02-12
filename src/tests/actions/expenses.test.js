@@ -2,6 +2,7 @@ import {startAddExpense, addExpense, editExpense, removeExpense } from '../../ac
 import expenses from '../fixtures/expenses';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
+import database from '../../firebase/firebase';
 
 const createMockStore = configureMockStore([thunk]);
 
@@ -41,7 +42,7 @@ test('should setup add expense action object with provided info', () => {
     })
 });
 
-test('should add expense to database and store', () => {
+test('should add expense to database and store', (done) => {
     const store = createMockStore({});
     const data = {
         description: "Mouse",
@@ -49,11 +50,46 @@ test('should add expense to database and store', () => {
         note: 'this one is better',
         createdAt: 1240104
     }
-    store.dispatch(data)
+
+    store.dispatch(startAddExpense(data)).then(() => {
+        const actions = store.getActions();
+        expect(actions[0]).toEqual({
+            type: "ADD_EXPENSE",
+            expense: {
+                id: expect.any(String),
+                ...data
+            }
+        })
+       return database.ref(`expenses/${actions[0].expense.id}`).once('value');
+    }).then((snapshot) => {
+        expect(snapshot.val()).toEqual(data);
+        done();
+    });
 });
 
-test('should add expense with defaults to database and store', () => {
+test('should add expense with defaults to database and store', (done) => {
+    const store = createMockStore({});
+    const defaultData = {
+        description: '',
+        note: '',
+        amount: 0,
+        createdAt: 0
+    }
 
+    store.dispatch(startAddExpense({})).then(() => {
+        const actions = store.getActions();
+        expect(actions[0]).toEqual({
+            type: "ADD_EXPENSE",
+            expense: {
+                id: expect.any(String),
+                ...defaultData
+            }
+        })
+       return database.ref(`expenses/${actions[0].expense.id}`).once('value');
+    }).then((snapshot) => {
+        expect(snapshot.val()).toEqual(defaultData);
+        done();
+    });
 });
 
 // test('should setup add expense action object with default values', () => {
